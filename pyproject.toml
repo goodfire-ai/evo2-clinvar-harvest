@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evo2-clinvar-harvest"
+version = "0.1.0"
+description = "End-to-end ClinVar variant effect prediction with Evo2"
+requires-python = ">=3.12"
+
+dependencies = [
+    "torch",
+    "polars~=1.36.1",
+    "loguru>=0.7.0",
+    "tqdm>=4.66.0",
+    "cyvcf2>=0.31.1",
+    "gffutils>=0.13",
+    "pyfaidx>=0.9.0.3",
+    "scipy>=1.16.3",
+    "scikit-learn>=1.8.0",
+    "safetensors>=0.5.0",
+    "jaxtyping>=0.3.5",
+    "wandb>=0.23.1",
+    "goodfire-core",
+]
+
+[project.scripts]
+setup-gencode = "src.datasets.gencode.setup:main"
+setup-clinvar = "src.datasets.clinvar.setup:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["data*", "logs*"]
+
+[project.optional-dependencies]
+evo2 = [
+    "evo2>=0.5.0; python_version < '3.13'",
+    "flash-attn>=2.8.0; python_version < '3.13'",
+    "transformer-engine[pytorch]>=2.5.0,<2.7.0; python_version < '3.13'",
+]
+
+[tool.uv]
+package = true
+no-build-isolation-package = ["transformer-engine-torch"]
+override-dependencies = ["torch>=2.9"]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128" }]
+flash-attn = [{ url = "https://github.com/mjun0812/flash-attention-prebuild-wheels/releases/download/v0.7.16/flash_attn-2.8.3%2Bcu128torch2.10-cp312-cp312-linux_x86_64.whl" }]
+goodfire-core = { git = "https://github.com/goodfire-ai/goodfire-core.git", rev = "3034d90e4c3703372abc4835397823b9f8beb6fe" }
+
+[[tool.uv.dependency-metadata]]
+name = "transformer-engine-torch"
+requires-dist = ["setuptools", "torch", "onnx", "onnxscript", "einops"]

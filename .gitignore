@@ -1,0 +1,28 @@
+# Data (downloaded/generated at runtime)
+data/
+logs/
+outputs/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+
+# uv
+uv.lock
+
+# Editors
+.vscode/
+.idea/
+
+# Weights / checkpoints
+*.pt
+*.safetensors
+*.ckpt
+
+# wandb
+wandb/
+
+# OS
+.DS_Store
