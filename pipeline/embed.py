@@ -30,7 +30,7 @@ from goodfire_core.storage import ActivationWriter, FilesystemStorage
 from loguru import logger
 from tqdm import tqdm
 
-from src.streaming import iter_dataset, unified_diff
+from utils import iter_dataset, unified_diff
 
 
 def main() -> None:
@@ -58,7 +58,7 @@ def main() -> None:
 
     # ── Resolve target IDs ────────────────────────────────────────────────
     if args.preset:
-        from src.datasets import clinvar
+        import clinvar
         all_ids = clinvar.metadata(args.preset)["variant_id"].to_list()
     elif args.manifest:
         all_ids = pl.read_csv(str(args.manifest))["variant_id"].to_list()

@@ -39,9 +39,8 @@ from goodfire_core.training.optimizers import EMuon
 from loguru import logger
 from torch.nn.parallel import DistributedDataParallel
 
-from src.analysis import gene_split
-from src.datasets import clinvar
-from src.streaming import unified_diff
+import clinvar
+from utils import gene_split, unified_diff
 
 
 def _unified_diff(batch: TensorActivations) -> TensorActivations:

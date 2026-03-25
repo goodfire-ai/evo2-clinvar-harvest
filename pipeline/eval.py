@@ -23,8 +23,8 @@ from loguru import logger
 from scipy.stats import spearmanr
 from sklearn.metrics import roc_auc_score
 
-from src.analysis import annotate_strata, compute_stratified_metrics
-from src.datasets import clinvar
+import clinvar
+from utils import annotate_strata, compute_stratified_metrics
 
 
 def eval_clinvar(

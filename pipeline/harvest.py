@@ -294,7 +294,7 @@ def load_manifest(args: argparse.Namespace) -> pl.DataFrame:
     Labels are converted to int (1=pathogenic, 0=benign) at the DataFrame level.
     """
     if args.preset:
-        from src.datasets import clinvar
+        import clinvar
         df = clinvar.metadata(args.preset)
         df = df.select(
             "variant_id",
@@ -383,7 +383,7 @@ def main() -> None:
     logger.info("Shard %d/%d: %d variants [%d:%d), up=%d down=%d K=%d",
                 args.shard_id, n_shards, shard.height, start, end, args.upstream, args.downstream, topk)
 
-    from src.datasets import gencode
+    import gencode
     genome = gencode.chromosomes()
     model = Evo2Bidir(args.model_name, args.block, args.device)
 

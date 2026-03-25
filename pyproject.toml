@@ -25,13 +25,14 @@ dependencies = [
 ]
 
 [project.scripts]
-setup-gencode = "src.datasets.gencode.setup:main"
-setup-clinvar = "src.datasets.clinvar.setup:main"
+setup = "utils:setup"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
-exclude = ["data*", "logs*"]
+include = ["clinvar*", "gencode*"]
+
+[tool.setuptools]
+py-modules = ["utils"]
 
 [project.optional-dependencies]
 evo2 = [
