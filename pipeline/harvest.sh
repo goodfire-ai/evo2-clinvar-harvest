@@ -45,7 +45,7 @@ echo "Start: $(date)"
 echo "Args:  $@"
 echo ""
 
-uv run python pipeline/harvest.py \
+.venv/bin/python pipeline/harvest.py \
     --shard-id "${SLURM_ARRAY_TASK_ID}" \
     --n-shards "${N_SHARDS}" \
     "$@"
