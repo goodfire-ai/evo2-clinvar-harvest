@@ -5,7 +5,7 @@ End-to-end pipeline for predicting variant pathogenicity using [Evo2](https://ar
 ## Quickstart
 
 ```bash
-git clone https://github.com/tdooms-goodfire/evo2-clinvar-harvest.git
+git clone https://github.com/goodfire-ai/evo2-clinvar-harvest.git
 cd evo2-clinvar-harvest
 uv sync
 
