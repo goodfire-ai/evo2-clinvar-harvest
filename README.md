@@ -18,8 +18,8 @@ This downloads GRCh38 from GENCODE and the ClinVar VCF from NCBI, then builds th
 | Preset | Description | Size |
 |--------|-------------|------|
 | `pilot` | CADD-deconfounded SNVs in small genes, for fast iteration | ~8k |
-| `labeled` | All pathogenic + benign variants (SNVs + indels, stars >= 1) | ~450k |
-| `unlabeled` | VUS + conflicting + other + low-confidence (for inference) | ~1.5M |
+| `labeled` | All pathogenic + benign variants (SNVs + indels, stars >= 1) | ~1.5M |
+| `unlabeled` | VUS + conflicting + other + low-confidence (for inference) | ~2.7M |
 
 ## Pipeline
 
