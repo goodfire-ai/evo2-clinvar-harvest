@@ -8,9 +8,8 @@ __pycache__/
 *.pyc
 *.egg-info/
 .venv/
-
-# uv
-uv.lock
+dist/
+build/
 
 # Editors
 .vscode/
