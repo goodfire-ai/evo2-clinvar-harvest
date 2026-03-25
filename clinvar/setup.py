@@ -8,7 +8,15 @@ from loguru import logger
 from tqdm import tqdm
 
 import gencode
-from utils import STAR_MAPPING, ensure_parent, reverse_complement, strand_aware_seq_pos
+from utils import ensure_parent, reverse_complement, strand_aware_seq_pos
+
+STAR_MAPPING = {
+    "practice_guideline": 4,
+    "reviewed_by_expert_panel": 3,
+    "criteria_provided,_multiple_submitters,_no_conflicts": 2,
+    "criteria_provided,_conflicting_interpretations": 2,
+    "criteria_provided,_single_submitter": 1,
+}
 
 
 def _classify_significance(sig: str) -> str:

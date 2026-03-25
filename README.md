@@ -27,7 +27,7 @@ This downloads GRCh38 from GENCODE and the ClinVar VCF from NCBI, then builds th
 uv run setup         Download GENCODE + ClinVar, build presets
      |
 harvest.py           Extract Evo2 bidirectional activation diffs (SLURM array)
-finalize.sh          Merge sharded harvest output
+finalize_harvest.sh  Merge sharded harvest output
      |
 train.py             Train CovarianceProbe on unified diffs (DDP)
      |
@@ -43,7 +43,7 @@ uv sync --extra evo2
 
 # Harvest activations
 sbatch pipeline/harvest.sh --preset labeled --model evo2-7b --storage /path/to/activations
-bash pipeline/finalize.sh /path/to/activations
+bash pipeline/finalize_harvest.sh /path/to/activations
 
 # Train probe (4 GPUs)
 torchrun --nproc_per_node=4 pipeline/train.py \

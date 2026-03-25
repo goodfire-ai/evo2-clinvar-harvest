@@ -22,15 +22,38 @@ Parallel (SLURM array):
 import argparse
 from pathlib import Path
 
+from collections.abc import Callable, Iterator
+
 import polars as pl
 import torch
 from goodfire_core.data.interfaces import TensorActivations
 from goodfire_core.probes.covariance import SequenceCovarianceProbe
-from goodfire_core.storage import ActivationWriter, FilesystemStorage
+from goodfire_core.storage import ActivationDataset, ActivationWriter, FilesystemStorage
 from loguru import logger
+from torch import Tensor
 from tqdm import tqdm
+from utils import unified_diff
 
-from utils import iter_dataset, unified_diff
+
+def iter_dataset(
+    storage: FilesystemStorage,
+    dataset_name: str,
+    target_ids: set[str],
+    transform: Callable[[Tensor], Tensor] | None = None,
+    *,
+    batch_size: int = 512,
+    dtype: torch.dtype = torch.bfloat16,
+    device: str = "cuda",
+) -> Iterator[tuple[Tensor, list[str]]]:
+    """Stream one dataset with optional per-batch transform."""
+    ds = ActivationDataset(storage, dataset_name, batch_size=batch_size, include_provenance=True)
+    for batch in ds.training_iterator(
+        device=device, n_epochs=1, shuffle=False, drop_last=False, sequence_ids=list(target_ids),
+    ):
+        x = batch.acts.to(dtype=dtype)
+        if transform is not None:
+            x = transform(x)
+        yield x, batch.sequence_ids
 
 
 def main() -> None:

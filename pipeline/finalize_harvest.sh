@@ -8,7 +8,7 @@
 # Usage:
 #   # Chained after harvest (recommended)
 #   HARVEST=$(sbatch --parsable --array=0-127 pipeline/harvest.sh ...)
-#   sbatch --dependency=afterok:${HARVEST} pipeline/finalize.sh /path/to/storage-dir
+#   sbatch --dependency=afterok:${HARVEST} pipeline/finalize_harvest.sh /path/to/storage-dir
 
 #SBATCH --job-name=finalize
 #SBATCH --cpus-per-task=4
@@ -22,7 +22,7 @@ set -euo pipefail
 cd "${SLURM_SUBMIT_DIR}"
 mkdir -p logs/harvest
 
-export STORAGE_DIR="${1:?Usage: finalize.sh <storage-dir>}"
+export STORAGE_DIR="${1:?Usage: finalize_harvest.sh <storage-dir>}"
 
 echo "=== Finalize ==="
 echo "Storage: ${STORAGE_DIR}"

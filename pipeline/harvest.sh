@@ -13,14 +13,14 @@
 #   STORAGE=/path/to/output
 #   HARVEST=$(sbatch --parsable --array=0-127 pipeline/harvest.sh \
 #       --preset deconfounded-full --storage $STORAGE)
-#   sbatch --dependency=afterok:${HARVEST} pipeline/finalize.sh $STORAGE
+#   sbatch --dependency=afterok:${HARVEST} pipeline/finalize_harvest.sh $STORAGE
 #
 #   # From CSV manifest, 32 shards, 20B model
 #   STORAGE=/path/to/output
 #   HARVEST=$(sbatch --parsable --array=0-31 pipeline/harvest.sh \
 #       --manifest /path/to/manifest.csv --storage $STORAGE \
 #       --model-name evo2_20b --block 20)
-#   sbatch --dependency=afterok:${HARVEST} pipeline/finalize.sh $STORAGE
+#   sbatch --dependency=afterok:${HARVEST} pipeline/finalize_harvest.sh $STORAGE
 
 #SBATCH --job-name=harvest
 #SBATCH --gres=gpu:1

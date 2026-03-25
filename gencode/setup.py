@@ -8,7 +8,8 @@ from loguru import logger
 from pyfaidx import Fasta
 from tqdm import tqdm
 
-from utils import CHROMOSOMES, ensure_parent, reverse_complement, strip_version
+from utils import CHROMOSOMES, ensure_parent, reverse_complement
+
 
 
 def parse_gtf(gtf_path: Path, biotype: str = "protein_coding") -> pl.DataFrame:

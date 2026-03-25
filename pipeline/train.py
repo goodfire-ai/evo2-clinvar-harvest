@@ -40,7 +40,21 @@ from loguru import logger
 from torch.nn.parallel import DistributedDataParallel
 
 import clinvar
-from utils import gene_split, unified_diff
+from utils import unified_diff
+
+
+def gene_split(
+    metadata: pl.DataFrame,
+    test_size: float = 0.2,
+    seed: int = 42,
+    gene_col: str = "gene_name",
+) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """Split metadata by genes -- no gene appears in both sets."""
+    genes = metadata.select(gene_col).unique().sort(gene_col)
+    n_test = int(len(genes) * test_size)
+    shuffled = genes.sample(fraction=1.0, seed=seed, shuffle=True)
+    test_genes = set(shuffled[gene_col][:n_test].to_list())
+    return metadata.filter(~pl.col(gene_col).is_in(test_genes)), metadata.filter(pl.col(gene_col).is_in(test_genes))
 
 
 def _unified_diff(batch: TensorActivations) -> TensorActivations:
