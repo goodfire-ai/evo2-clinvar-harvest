@@ -6,7 +6,8 @@ run bidir Evo2, select top-K positions per direction with a fixed window
 after the variant, and save 3 activation views at each position.
 
 No gene boundaries, no gene length limits. Handles SNVs and indels natively.
-Supports per-shard parallelism and checkpoint/resume on crash.
+Supports per-shard parallelism. Partitions are atomic: a completed partition
+has metadata.json; a crashed partition is re-run from scratch.
 
 Outputs (goodfire-core chunked format):
     activations [2, 3, K, d]  fp16  per-direction, 3 views at K positions
@@ -327,14 +328,41 @@ def load_manifest(args: argparse.Namespace) -> pl.DataFrame:
     return df
 
 
-# ── Checkpoint ───────────────────────────────────────────────────────────────
+# ── Utilities ────────────────────────────────────────────────────────────────
 
 
-def load_checkpoint(path: Path) -> set[str]:
-    """Load set of completed variant IDs from checkpoint file."""
-    if not path.exists():
+def load_completed_from_partition(storage_path: Path, shard_id: int) -> set[str]:
+    """Scan safetensors metadata headers for sequence IDs on disk.
+
+    Reads only the JSON header of each chunk file — no tensor data is loaded.
+    Useful for auditing or verifying a completed partition.
+    """
+    import json
+    from safetensors import safe_open
+
+    chunk_dir = storage_path / "activations" / f"partition_{shard_id}" / "chunks"
+    if not chunk_dir.exists():
         return set()
-    return {line.strip() for line in path.read_text().splitlines() if line.strip()}
+
+    sids: set[str] = set()
+    n_chunks = 0
+    for chunk_path in sorted(chunk_dir.iterdir()):
+        sf = chunk_path / "activations.safetensors"
+        if not sf.exists():
+            continue
+        try:
+            with safe_open(str(sf), framework="pt") as f:
+                meta = f.metadata()
+            for sid in json.loads(meta.get("sequence_ids", "[]")):
+                if sid is not None:
+                    sids.add(sid)
+            n_chunks += 1
+        except Exception as e:
+            logger.warning("Could not read chunk metadata %s: %s", chunk_path.name, e)
+
+    if n_chunks:
+        logger.info("Partition scan: %d chunks, %d variants on disk", n_chunks, len(sids))
+    return sids
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -390,20 +418,11 @@ def main() -> None:
     # Column-wise access
     vids = shard["variant_id"].to_list()
 
-    # Checkpoint — validate against current shard to catch stale files from prior runs
-    ckpt_dir = args.storage / "checkpoints"
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
-    ckpt_path = ckpt_dir / f"shard_{args.shard_id}.txt"
-    completed = load_checkpoint(ckpt_path)
-    if completed:
-        shard_vids = set(vids)
-        stale = completed - shard_vids
-        if stale:
-            raise RuntimeError(
-                f"Checkpoint {ckpt_path} has {len(stale)} entries not in this shard's "
-                f"manifest. Stale checkpoint from a prior run? Delete it to start fresh."
-            )
-        logger.info("Resuming from %d completed variants", len(completed))
+    # Partitions are atomic: metadata.json marks completion. A crashed partition is re-run from scratch.
+    partition_done = args.storage / "activations" / f"partition_{args.shard_id}" / "metadata.json"
+    if partition_done.exists():
+        logger.info("Partition %d already complete, skipping.", args.shard_id)
+        return
 
     # Writers — one primary dataset with all activations, plus small metadata datasets.
     # activations: [4, K, d] = [var_fwd, var_bwd, ref_fwd, ref_bwd] at top-K positions.
@@ -416,7 +435,7 @@ def main() -> None:
     item_bytes = 2 * 3 * topk * d * 2  # largest item: activations [2, 3, K, d] fp16
     buffer_items = max(1, 1_000_000_000 // item_bytes)
     writer_cfg = dict(mode="tensor", partition_id=args.shard_id, shuffle=False,
-                      shuffle_buffer_size=buffer_items, overwrite=False, compute_checksum=False)
+                      shuffle_buffer_size=buffer_items, compute_checksum=False)
     writers = {
         "activations": ActivationWriter(storage, "activations", d_model=(2, 3, topk, d), dtype="float16", **writer_cfg),
         "positions": ActivationWriter(storage, "positions", d_model=(2, topk), dtype="int64", **writer_cfg),
@@ -435,9 +454,6 @@ def main() -> None:
 
     for i in pbar:
         vid = vids[i]
-        if vid in completed:
-            continue
-
         label = int(labels[i])
 
         try:
@@ -524,8 +540,6 @@ def main() -> None:
             del ref_fwd, ref_bwd, var_fwd, var_bwd
             del ref_fwd_loss, ref_bwd_loss, var_fwd_loss, var_bwd_loss
             n_ok += 1
-            with ckpt_path.open("a") as f:
-                f.write(vid + "\n")
 
         except (torch.cuda.OutOfMemoryError, KeyboardInterrupt):
             raise

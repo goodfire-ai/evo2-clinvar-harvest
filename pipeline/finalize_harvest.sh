@@ -30,7 +30,7 @@ echo "Node:    $(hostname)"
 echo "Start:   $(date)"
 echo ""
 
-uv run python -c "
+.venv/bin/python -c "
 import os
 from goodfire_core.storage import ActivationDataset, FilesystemStorage
 from goodfire_core.storage.finalizer import finalize_partitions

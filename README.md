@@ -18,8 +18,8 @@ This downloads GRCh38 from GENCODE and the ClinVar VCF from NCBI, then builds th
 | Preset | Description | Size |
 |--------|-------------|------|
 | `pilot` | CADD-deconfounded SNVs in small genes, for fast iteration | ~8k |
-| `labeled` | All pathogenic + benign variants (SNVs + indels, stars >= 1) | ~450k |
-| `unlabeled` | VUS + conflicting + other + low-confidence (for inference) | ~1.5M |
+| `labeled` | All pathogenic + benign variants (SNVs + indels, stars >= 1) | ~1.54M |
+| `unlabeled` | VUS + conflicting + other + low-confidence (for inference) | ~2.71M |
 
 ## Pipeline
 
@@ -56,6 +56,39 @@ EMBED=$(sbatch --parsable --array=0-7 --gres=gpu:1 --wrap \
 sbatch --dependency=afterok:${EMBED} pipeline/finalize_embed.sh $STORAGE/cov64
 uv run python pipeline/eval.py --probe $STORAGE/cov64 --preset pilot
 ```
+
+## Full-scale run (256 GPUs)
+
+Measured throughput on Evo2-7B is ~17 s/variant. For max ~1 hour data loss per partition use
+**16,384 partitions** (64 sequential batches × 256 concurrent GPUs). SLURM queues the excess
+automatically — only 256 run at a time.
+
+```bash
+cd /path/to/evo2-clinvar-harvest
+mkdir -p logs/harvest
+
+LABELED=/mnt/data/artifacts/thomas.dooms/evo2-clinvar-harvest/labeled
+UNLABELED=/mnt/data/artifacts/thomas.dooms/evo2-clinvar-harvest/unlabeled
+
+# Labeled (~1.54M variants, ~26 min/partition, ~3 h wall-clock)
+LABELED_JOB=$(sbatch --parsable --array=0-16383 pipeline/harvest.sh \
+    --preset labeled --storage $LABELED)
+sbatch --dependency=afterok:${LABELED_JOB} pipeline/finalize_harvest.sh $LABELED
+
+# Unlabeled (~2.71M variants, ~47 min/partition, ~5 h wall-clock) — runs in parallel
+UNLABELED_JOB=$(sbatch --parsable --array=0-16383 pipeline/harvest.sh \
+    --preset unlabeled --storage $UNLABELED)
+sbatch --dependency=afterok:${UNLABELED_JOB} pipeline/finalize_harvest.sh $UNLABELED
+```
+
+**Resume**: if some shards fail, finalize reports the missing partition IDs. Re-submit only those:
+```bash
+# e.g. partitions 42, 1337, 8192 failed
+sbatch --array=42,1337,8192 pipeline/harvest.sh --preset labeled --storage $LABELED
+```
+
+**Partition atomicity**: each shard is independent — `partition_N/metadata.json` marks completion.
+A crashed shard is re-run from scratch with no data loss to other shards.
 
 ## Agent setup instructions
 

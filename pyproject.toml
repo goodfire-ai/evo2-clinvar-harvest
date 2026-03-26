@@ -37,10 +37,13 @@ include = ["clinvar*", "gencode*"]
 [tool.setuptools]
 py-modules = ["utils"]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [tool.uv]
 package = true
 no-build-isolation-package = ["transformer-engine-torch"]
-override-dependencies = ["torch>=2.9"]
+override-dependencies = ["torch>=2.9,<2.11"]
 
 [[tool.uv.index]]
 name = "pytorch-cu128"

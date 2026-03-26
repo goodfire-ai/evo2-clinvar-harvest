@@ -175,7 +175,7 @@ def setup() -> None:
     args = parser.parse_args()
 
     # GENCODE
-    base = "ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49"
+    base = "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_49"
     gtf = DOWNLOADS / "gencode.v49.basic.annotation.gtf"
     fasta = DOWNLOADS / "GRCh38.primary_assembly.genome.fa"
     _cached_download(f"{base}/gencode.v49.basic.annotation.gtf.gz", gtf, compressed=True, refresh=args.refresh)
