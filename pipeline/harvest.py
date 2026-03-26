@@ -411,18 +411,19 @@ def main() -> None:
     logger.info("Shard %d/%d: %d variants [%d:%d), up=%d down=%d K=%d",
                 args.shard_id, n_shards, shard.height, start, end, args.upstream, args.downstream, topk)
 
+    # Partitions are atomic: metadata.json marks completion. A crashed partition is re-run from scratch.
+    # Check before loading the model to avoid wasting ~5 min on weight loading for finished partitions.
+    partition_done = args.storage / "activations" / f"partition_{args.shard_id}" / "metadata.json"
+    if partition_done.exists():
+        logger.info("Partition %d already complete, skipping.", args.shard_id)
+        return
+
     import gencode
     genome = gencode.chromosomes()
     model = Evo2Bidir(args.model_name, args.block, args.device)
 
     # Column-wise access
     vids = shard["variant_id"].to_list()
-
-    # Partitions are atomic: metadata.json marks completion. A crashed partition is re-run from scratch.
-    partition_done = args.storage / "activations" / f"partition_{args.shard_id}" / "metadata.json"
-    if partition_done.exists():
-        logger.info("Partition %d already complete, skipping.", args.shard_id)
-        return
 
     # Writers — one primary dataset with all activations, plus small metadata datasets.
     # activations: [4, K, d] = [var_fwd, var_bwd, ref_fwd, ref_bwd] at top-K positions.
