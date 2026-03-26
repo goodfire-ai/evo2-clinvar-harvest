@@ -108,6 +108,10 @@ If you are an AI agent setting up this repo on a new machine, follow these steps
 
 **Key conventions**: All pipeline scripts take paths via CLI flags — no hardcoded paths anywhere. SLURM scripts use `${SLURM_SUBMIT_DIR}` for portability. Don't specify `--partition` (cluster default). For Evo2-7B use `--block 27 --d-model 4096`; for 20B use `--block 20 --d-model 8192`.
 
+## ClinVar dataset documentation
+
+For detailed schema, column definitions, coordinate conventions, and preset descriptions, see the full ClinVar dataset README in the parent repo: [gfm_gen/src/datasets/clinvar/README.md](https://github.com/tdooms-goodfire/gfm_gen/blob/master/src/datasets/clinvar/README.md).
+
 ## Dependencies
 
 - [goodfire-core](https://github.com/goodfire-ai/goodfire-core) — activation storage, probe training, streaming
